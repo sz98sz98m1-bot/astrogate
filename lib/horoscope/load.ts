@@ -12,10 +12,12 @@ export interface LoadedHoroscopeBundle {
   isStale: boolean;
 }
 
-export function loadHoroscopeBundle(period: HoroscopePeriod): LoadedHoroscopeBundle {
+export async function loadHoroscopeBundle(period: HoroscopePeriod): Promise<LoadedHoroscopeBundle> {
   const fileName = fileNameFor(period);
-  const bundle = readJsonCache<HoroscopeBundle>(fileName);
-  const ageMs = cacheFileAgeMs(fileName);
+  const [bundle, ageMs] = await Promise.all([
+    readJsonCache<HoroscopeBundle>(fileName),
+    cacheFileAgeMs(fileName),
+  ]);
   const isStale = ageMs === null || ageMs > STALE_THRESHOLD_MS;
   return { bundle, isStale };
 }

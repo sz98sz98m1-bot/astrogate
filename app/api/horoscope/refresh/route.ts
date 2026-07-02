@@ -11,19 +11,22 @@ export const maxDuration = 60;
 
 const CONCURRENCY = 4;
 
-/**
- * Protected refresh endpoint, kept for parity with a future Vercel Cron deployment
- * (Vercel's filesystem is ephemeral in production, so this JSON-file cache approach
- * would need rework before relying on this route in production -- local dev instead
- * runs `npm run refresh-horoscopes` directly via Windows Task Scheduler).
- */
-export async function POST(request: Request) {
+function isAuthorized(request: Request): boolean {
   const secret = process.env.CRON_SECRET;
-  if (secret) {
-    const provided = request.headers.get("x-cron-secret");
-    if (provided !== secret) {
-      return NextResponse.json({ error: "غير مصرح" }, { status: 401 });
-    }
+  if (!secret) return true; // no secret configured locally -- allow (dev convenience)
+
+  // Vercel Cron sends `Authorization: Bearer $CRON_SECRET` automatically when the
+  // CRON_SECRET env var is set. Also accept the custom header for manual/local calls.
+  const authHeader = request.headers.get("authorization");
+  if (authHeader === `Bearer ${secret}`) return true;
+
+  const customHeader = request.headers.get("x-cron-secret");
+  return customHeader === secret;
+}
+
+async function refresh(request: Request) {
+  if (!isAuthorized(request)) {
+    return NextResponse.json({ error: "غير مصرح" }, { status: 401 });
   }
 
   const period: HoroscopePeriod =
@@ -48,7 +51,7 @@ export async function POST(request: Request) {
     };
 
     const fileName = period === "daily" ? "horoscope-daily.json" : "horoscope-weekly.json";
-    writeJsonCache(fileName, bundle);
+    await writeJsonCache(fileName, bundle);
 
     return NextResponse.json({ ok: true, period, generatedAtIso: bundle.generatedAtIso });
   } catch (error) {
@@ -58,4 +61,13 @@ export async function POST(request: Request) {
       { status: 500 },
     );
   }
+}
+
+// Vercel Cron always sends GET requests. POST is kept for manual/local triggering.
+export async function GET(request: Request) {
+  return refresh(request);
+}
+
+export async function POST(request: Request) {
+  return refresh(request);
 }

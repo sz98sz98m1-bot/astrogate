@@ -53,7 +53,7 @@ async function main() {
   };
 
   const fileName = period === "daily" ? "horoscope-daily.json" : "horoscope-weekly.json";
-  writeJsonCache(fileName, bundle);
+  await writeJsonCache(fileName, bundle);
 
   console.log(`[refresh-horoscopes] تم بنجاح، تمت كتابة ${fileName} لكل الأبراج الـ12.`);
 }

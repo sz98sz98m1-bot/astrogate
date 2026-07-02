@@ -11,7 +11,7 @@ export default async function HoroscopePage({
 }) {
   const { period: periodParam } = await searchParams;
   const period: HoroscopePeriod = periodParam === "weekly" ? "weekly" : "daily";
-  const { bundle, isStale } = loadHoroscopeBundle(period);
+  const { bundle, isStale } = await loadHoroscopeBundle(period);
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-12 sm:px-6">

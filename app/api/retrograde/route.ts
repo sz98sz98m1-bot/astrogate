@@ -12,8 +12,10 @@ interface RetrogradeCache {
 }
 
 export async function GET() {
-  const ageMs = cacheFileAgeMs(CACHE_FILE);
-  const cached = readJsonCache<RetrogradeCache>(CACHE_FILE);
+  const [ageMs, cached] = await Promise.all([
+    cacheFileAgeMs(CACHE_FILE),
+    readJsonCache<RetrogradeCache>(CACHE_FILE),
+  ]);
 
   if (cached && ageMs !== null && ageMs < CACHE_MAX_AGE_MS) {
     return NextResponse.json(cached);
@@ -21,7 +23,7 @@ export async function GET() {
 
   const statuses = computeRetrogradeStatus();
   const result: RetrogradeCache = { computedAtIso: new Date().toISOString(), statuses };
-  writeJsonCache(CACHE_FILE, result);
+  await writeJsonCache(CACHE_FILE, result);
 
   return NextResponse.json(result);
 }

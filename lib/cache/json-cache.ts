@@ -1,14 +1,22 @@
 import fs from "node:fs";
-import os from "node:os";
 import path from "node:path";
 
+const CACHE_DIR = path.join(process.cwd(), "data");
+
 /**
- * Vercel's serverless filesystem is read-only except for os.tmpdir() (/tmp), and even that
- * is ephemeral/per-instance (wiped between cold starts, not shared across instances) --
- * acceptable for a regenerable cache, unacceptable to crash requests over. Locally, we keep
- * using a project-relative /data folder so the cache survives dev server restarts.
+ * On Vercel, the filesystem is read-only (except /tmp, which is ephemeral and not shared
+ * across serverless invocations) -- a local JSON file written by one function invocation
+ * (e.g. the daily cron) would never be visible to the invocation serving a page request.
+ * Vercel Blob is real persistent storage reachable from any invocation, so it's used
+ * whenever running on Vercel (gated on the platform, not merely on the token's presence,
+ * since `vercel env pull` also copies BLOB_READ_WRITE_TOKEN into local .env.local for
+ * preview/testing purposes -- local dev should still default to the filesystem cache
+ * so it never needs cloud credentials and never accidentally writes to production Blob
+ * storage from a laptop).
  */
-const CACHE_DIR = process.env.VERCEL ? path.join(os.tmpdir(), "astrogate-cache") : path.join(process.cwd(), "data");
+function shouldUseBlobStorage(): boolean {
+  return Boolean(process.env.VERCEL) && Boolean(process.env.BLOB_READ_WRITE_TOKEN);
+}
 
 function ensureCacheDir() {
   if (!fs.existsSync(CACHE_DIR)) {
@@ -16,7 +24,19 @@ function ensureCacheDir() {
   }
 }
 
-export function readJsonCache<T>(fileName: string): T | null {
+export async function readJsonCache<T>(fileName: string): Promise<T | null> {
+  if (shouldUseBlobStorage()) {
+    try {
+      const { get } = await import("@vercel/blob");
+      const result = await get(fileName, { access: "private" });
+      if (!result || result.statusCode !== 200) return null;
+      const text = await new Response(result.stream).text();
+      return JSON.parse(text) as T;
+    } catch {
+      return null;
+    }
+  }
+
   try {
     const filePath = path.join(CACHE_DIR, fileName);
     if (!fs.existsSync(filePath)) return null;
@@ -27,11 +47,26 @@ export function readJsonCache<T>(fileName: string): T | null {
 }
 
 /**
- * Atomic write: write to a temp file then rename, so readers never see a half-written file.
- * Never throws -- a cache write is always a best-effort optimization, never something a
- * request should fail over (especially on Vercel, where the filesystem can be uncooperative).
+ * Writes the cache, never throwing -- a cache write is always a best-effort optimization,
+ * never something a request should fail over. On Vercel this persists to Blob storage
+ * (survives across invocations); locally it's an atomic write-then-rename to /data.
  */
-export function writeJsonCache<T>(fileName: string, data: T): void {
+export async function writeJsonCache<T>(fileName: string, data: T): Promise<void> {
+  if (shouldUseBlobStorage()) {
+    try {
+      const { put } = await import("@vercel/blob");
+      await put(fileName, JSON.stringify(data, null, 2), {
+        access: "private",
+        contentType: "application/json",
+        addRandomSuffix: false,
+        allowOverwrite: true,
+      });
+    } catch (error) {
+      console.warn(`[json-cache] تعذّرت كتابة ${fileName} إلى Vercel Blob:`, error);
+    }
+    return;
+  }
+
   try {
     ensureCacheDir();
     const filePath = path.join(CACHE_DIR, fileName);
@@ -43,7 +78,17 @@ export function writeJsonCache<T>(fileName: string, data: T): void {
   }
 }
 
-export function cacheFileAgeMs(fileName: string): number | null {
+export async function cacheFileAgeMs(fileName: string): Promise<number | null> {
+  if (shouldUseBlobStorage()) {
+    try {
+      const { head } = await import("@vercel/blob");
+      const result = await head(fileName);
+      return Date.now() - new Date(result.uploadedAt).getTime();
+    } catch {
+      return null;
+    }
+  }
+
   try {
     const filePath = path.join(CACHE_DIR, fileName);
     if (!fs.existsSync(filePath)) return null;

@@ -25,7 +25,7 @@ export default async function SignHoroscopePage({
   }
   const signKey = sign as ZodiacSignKey;
   const period: HoroscopePeriod = periodParam === "weekly" ? "weekly" : "daily";
-  const { bundle } = loadHoroscopeBundle(period);
+  const { bundle } = await loadHoroscopeBundle(period);
   const horoscope = bundle?.signs[signKey];
 
   return (

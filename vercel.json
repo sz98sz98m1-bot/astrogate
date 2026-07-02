@@ -1,0 +1,8 @@
+{
+  "crons": [
+    {
+      "path": "/api/horoscope/refresh",
+      "schedule": "10 0 * * *"
+    }
+  ]
+}

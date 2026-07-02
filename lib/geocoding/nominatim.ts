@@ -27,12 +27,12 @@ async function rateLimit() {
   lastRequestAt = Date.now();
 }
 
-function loadCache(): GeocodeCache {
-  return readJsonCache<GeocodeCache>(CACHE_FILE) ?? {};
+async function loadCache(): Promise<GeocodeCache> {
+  return (await readJsonCache<GeocodeCache>(CACHE_FILE)) ?? {};
 }
 
-function saveCache(cache: GeocodeCache) {
-  writeJsonCache(CACHE_FILE, cache);
+async function saveCache(cache: GeocodeCache): Promise<void> {
+  await writeJsonCache(CACHE_FILE, cache);
 }
 
 interface NominatimResponseItem {
@@ -49,7 +49,7 @@ interface NominatimResponseItem {
  */
 export async function geocodeViaNominatim(query: string): Promise<GeocodeResult | null> {
   const cacheKey = query.trim().toLowerCase();
-  const cache = loadCache();
+  const cache = await loadCache();
   if (cache[cacheKey]) return cache[cacheKey];
 
   await rateLimit();
@@ -81,7 +81,7 @@ export async function geocodeViaNominatim(query: string): Promise<GeocodeResult 
   };
 
   cache[cacheKey] = result;
-  saveCache(cache);
+  await saveCache(cache);
 
   return result;
 }
