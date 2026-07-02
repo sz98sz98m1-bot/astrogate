@@ -28,14 +28,18 @@ async function requestHoroscope(
 
   const response = await client.messages.create({
     model: HOROSCOPE_MODEL,
-    max_tokens: 600,
+    max_tokens: 800,
+    // This is a short, direct JSON-generation task -- extended thinking adds latency/cost
+    // and (observed in production) can exhaust max_tokens on its own reasoning pass before
+    // any visible text is produced, leaving the response with no usable text block at all.
+    thinking: { type: "disabled" },
     system: [buildHoroscopeSystemPrompt()],
     messages: [{ role: "user", content: buildHoroscopeUserMessage(sign, period, transits) }],
   });
 
   const textBlock = response.content.find((block) => block.type === "text");
   if (!textBlock || textBlock.type !== "text") {
-    throw new Error("رد النموذج لا يحتوي على نص");
+    throw new Error(`رد النموذج لا يحتوي على نص (stop_reason: ${response.stop_reason})`);
   }
 
   const parsed = horoscopeSchema.parse(extractJson(textBlock.text));
