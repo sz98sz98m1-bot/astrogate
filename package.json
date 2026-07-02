@@ -1,0 +1,49 @@
+{
+  "name": "astrogate",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint",
+    "verify:astro": "tsx scripts/verify-astro.ts",
+    "verify:solar-return": "tsx scripts/verify-solar-return.ts",
+    "refresh-horoscopes": "tsx scripts/refresh-horoscopes.ts"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.109.1",
+    "@mdx-js/loader": "^3.1.1",
+    "@mdx-js/react": "^3.1.1",
+    "@next/mdx": "^16.2.10",
+    "@react-three/drei": "^10.7.7",
+    "@react-three/fiber": "^9.6.1",
+    "@types/mdx": "^2.0.14",
+    "astronomy-engine": "^2.1.19",
+    "dotenv": "^17.4.2",
+    "framer-motion": "^12.42.2",
+    "lucide-react": "^1.23.0",
+    "luxon": "^3.7.2",
+    "next": "16.2.10",
+    "react": "19.2.4",
+    "react-dom": "19.2.4",
+    "three": "^0.185.1",
+    "tz-lookup": "^6.1.25",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@tailwindcss/typography": "^0.5.20",
+    "@types/luxon": "^3.7.2",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "@types/three": "^0.185.0",
+    "@types/tz-lookup": "^6.1.2",
+    "eslint": "^9",
+    "eslint-config-next": "16.2.10",
+    "tailwindcss": "^4",
+    "tsx": "^4.22.4",
+    "typescript": "^5"
+  }
+}

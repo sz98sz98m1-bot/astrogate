@@ -1,0 +1,80 @@
+@import "tailwindcss";
+@plugin "@tailwindcss/typography";
+
+:root {
+  --background: #040612;
+  --foreground: #eef1ff;
+
+  --color-space-950: #040612;
+  --color-space-900: #090b1a;
+  --color-space-800: #111827;
+
+  --color-blue-accent: #1d4ed8;
+  --color-violet-accent: #7c3aed;
+  --color-sky-accent: #60a5fa;
+  --color-cyan-accent: #38bdf8;
+  --color-purple-accent: #a855f7;
+
+  --color-gold: #ffd166;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-tajawal);
+
+  --color-space-950: var(--color-space-950);
+  --color-space-900: var(--color-space-900);
+  --color-space-800: var(--color-space-800);
+  --color-blue-accent: var(--color-blue-accent);
+  --color-violet-accent: var(--color-violet-accent);
+  --color-sky-accent: var(--color-sky-accent);
+  --color-cyan-accent: var(--color-cyan-accent);
+  --color-purple-accent: var(--color-purple-accent);
+  --color-gold: var(--color-gold);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  min-height: 100vh;
+}
+
+/* Reusable glassmorphism panel: translucent fill, blurred backdrop, soft border/shadow. */
+.glass-panel {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.02));
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 24px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
+}
+
+.glass-panel-hover {
+  transition:
+    border-color 0.3s ease,
+    box-shadow 0.3s ease,
+    transform 0.3s ease;
+}
+
+.glass-panel-hover:hover {
+  border-color: rgba(255, 209, 102, 0.35);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.35),
+    0 0 24px rgba(124, 58, 237, 0.25);
+  transform: translateY(-2px);
+}
+
+.text-glow-gold {
+  text-shadow: 0 0 24px rgba(255, 209, 102, 0.45);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}

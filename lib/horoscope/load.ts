@@ -1,0 +1,21 @@
+import { cacheFileAgeMs, readJsonCache } from "@/lib/cache/json-cache";
+import type { HoroscopeBundle, HoroscopePeriod } from "@/types/horoscope";
+
+const STALE_THRESHOLD_MS = 36 * 60 * 60 * 1000; // 36 hours
+
+function fileNameFor(period: HoroscopePeriod): string {
+  return period === "daily" ? "horoscope-daily.json" : "horoscope-weekly.json";
+}
+
+export interface LoadedHoroscopeBundle {
+  bundle: HoroscopeBundle | null;
+  isStale: boolean;
+}
+
+export function loadHoroscopeBundle(period: HoroscopePeriod): LoadedHoroscopeBundle {
+  const fileName = fileNameFor(period);
+  const bundle = readJsonCache<HoroscopeBundle>(fileName);
+  const ageMs = cacheFileAgeMs(fileName);
+  const isStale = ageMs === null || ageMs > STALE_THRESHOLD_MS;
+  return { bundle, isStale };
+}
